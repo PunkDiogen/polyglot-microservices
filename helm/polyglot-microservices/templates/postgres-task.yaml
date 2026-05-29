@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "postgres-task"
+spec:
+  selector:
+    matchLabels:
+      app: "postgres-task"
+  serviceName: "postgres-task-headless-svc"
+  replicas: 1
+
+  template:
+    metadata:
+      labels:
+        app: "postgres-task"
+
+    spec:
+      containers:
+        - name: "postgres-task"
+          image: "{{ .Values.postgresTask.image.repository }}:{{ .Values.postgresTask.image.tag }}"
+          ports:
+            - containerPort: 5432
+          env:
+            - name: "POSTGRES_USER"
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.postgresTask.secretName }}"
+                  key: "POSTGRES_USER_TASK"
+            - name: "POSTGRES_PASSWORD"
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.postgresTask.secretName }}"
+                  key: "POSTGRES_PASSWORD_TASK"
+            - name: "POSTGRES_DB"
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.postgresTask.secretName }}"
+                  key: "POSTGRES_DB_TASK"
+          volumeMounts:
+            - name: "postgres-task-pvc"
+              mountPath: "/var/lib/postgresql/data"
+              subPath: "postgres-data-task"
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-task-pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: "{{ .Values.postgresTask.storage.className }}"
+        resources:
+          requests:
+            storage: "{{ .Values.postgresTask.storage.size }}"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "postgres-task-headless-svc"
+
+spec:
+  selector:
+    app: "postgres-task"
+  clusterIP: "None"
+
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "postgres-task-svc"
+
+spec:
+  selector:
+    app: "postgres-task"
+
+  ports:
+    - port: 5432
+      targetPort: 5432

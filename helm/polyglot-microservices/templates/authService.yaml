@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "auth-service-deployment"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "auth-service"
+
+  template:
+    metadata:
+      labels:
+        app: "auth-service"
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "auth-service"
+        vault.hashicorp.com/agent-inject-secret-auth: "polyglot-platform/data/app-secrets"
+        vault.hashicorp.com/agent-inject-template-auth: |
+          {{`{{- with secret "polyglot-platform/data/app-secrets" -}}
+          export ConnectionStrings__Default="{{ .Data.data.CONNECTION_STRING_AUTH }}"
+          {{- end }}`}}
+
+    spec:
+      serviceAccountName: auth-service
+      containers:
+        - name: "auth-service"
+          image: "{{ .Values.authService.image.repository }}:{{ .Values.authService.image.tag }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              . /vault/secrets/auth
+              exec dotnet /app/AuthService.dll
+          securityContext:
+            seccompProfile:
+              type: Unconfined
+          ports:
+            - containerPort: {{ .Values.authService.port }}
+          env:
+            - name: "ASPNETCORE_ENVIRONMENT"
+              value: "Development"
+            - name: "ASPNETCORE_URLS"
+              value: "http://+:{{ .Values.apiGateway.port }}"
+            - name: "Jwt__Key"
+              value: "{{ .Values.jwt.key }}"
+            - name: "Jwt__Issuer"
+              value: "{{ .Values.jwt.issuer }}"
+            - name: "Jwt__Audience"
+              value: "{{ .Values.jwt.audience }}"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service-svc
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: {{ .Values.authService.port }}
+      targetPort: {{ .Values.authService.port }}

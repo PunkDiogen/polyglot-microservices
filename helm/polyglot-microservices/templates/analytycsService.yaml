@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "analytics-service-deployment"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "analytics-service"
+
+  template:
+    metadata:
+      labels:
+        app: "analytics-service"
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "analytics"
+        vault.hashicorp.com/agent-inject-secret-config: "polyglot-platform/data/app-secrets"
+        vault.hashicorp.com/agent-inject-template-config: |
+          {{`{{- with secret "polyglot-platform/data/app-secrets" -}}
+          export MONGODB_URL="{{ .Data.data.MONGODB_URL }}"
+          {{- end }}`}}
+
+    spec:
+      serviceAccountName: analytics-service
+      containers:
+        - name: "analytics-service"
+          image: "{{ .Values.analyticsService.image.repository }}:{{ .Values.analyticsService.image.tag }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              . /vault/secrets/config
+              exec python -m app.main
+          ports:
+            - containerPort: {{ .Values.analyticsService.port }}
+          env:
+            - name: "DATABASE_NAME"
+              value: "analytics"
+            - name: "KAFKA_BOOTSTRAP_SERVERS"
+              value: "kafka-svc:9092"
+            - name: "KAFKA_GROUP_ID"
+              value: "analytics-service"
+            - name: "KAFKA_TOPIC_TASK"
+              value: "task-events"
+            - name: "KAFKA_TOPIC_PROJECT"
+              value: "project-events"
+            - name: "JWT_SECRET_KEY"
+              value: "{{ .Values.jwt.key }}"
+            - name: "JWT_ALGORITHM"
+              value: "HS256"
+            - name: "JWT_AUDIENCE"
+              value: "{{ .Values.jwt.audience }}"
+            - name: "JWT_ISSUER"
+              value: "{{ .Values.jwt.issuer }}"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-service-svc
+spec:
+  selector:
+    app: analytics-service
+  ports:
+    - port: {{ .Values.analyticsService.port }}
+      targetPort: {{ .Values.analyticsService.port }}

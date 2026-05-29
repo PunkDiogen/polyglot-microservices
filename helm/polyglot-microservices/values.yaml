@@ -1,0 +1,93 @@
+secrets:
+  MONGODB_URL: "REPLACE_ME"
+  POSTGRES_USER_AUTH: "REPLACE_ME"
+  POSTGRES_PASSWORD_AUTH: "REPLACE_ME"
+  POSTGRES_DB_AUTH: "REPLACE_ME"
+  POSTGRES_USER_TASK: "REPLACE_ME"
+  POSTGRES_PASSWORD_TASK: "REPLACE_ME"
+  POSTGRES_DB_TASK: "REPLACE_ME"
+  MONGO_INITDB_ROOT_USERNAME: "REPLACE_ME"
+  MONGO_INITDB_ROOT_PASSWORD: "REPLACE_ME"
+
+domain: "REPLACE_ME" # Ваш домен (замените на свой)
+tlsSecret: "REPLACE_ME" # Secret с TLS-сертификатом
+
+jwt:
+  key: "REPLACE_ME"
+  issuer: "REPLACE_ME"
+  audience: "REPLACE_ME"
+
+kafka:
+  image:
+    repository: redpandadata/redpanda
+    tag: v24.2.10
+  memory: 512M
+  nodeId: 1
+  autoCreateTopics: true
+
+mongo:
+  image:
+    repository: mongo
+    tag: 4.4
+  storage:
+    className: longhorn
+    size: 3Gi
+  secretName: app-secret
+
+postgresAuth:
+  image:
+    repository: postgres
+    tag: 15
+  storage:
+    className: longhorn
+    size: 3Gi
+  secretName: app-secret
+
+postgresTask:
+  image:
+    repository: postgres
+    tag: 15
+  storage:
+    className: longhorn
+    size: 3Gi
+  secretName: app-secret
+
+authService:
+  image:
+    repository: punkdiogen/auth-service
+    tag: v1.0
+  port: 5000
+
+taskService:
+  image:
+    repository: punkdiogen/task-service
+    tag: v1.0
+  port: 8080
+
+analyticsService:
+  image:
+    repository: punkdiogen/analitics-service
+    tag: v1.2
+  port: 8000
+
+analyticsWorkerTask:
+  image:
+    repository: punkdiogen/analyticsworkertask
+    tag: v1.2
+
+analyticsWorkerProject:
+  image:
+    repository: punkdiogen/analyticsworkerproject
+    tag: v1.4
+
+apiGateway:
+  image:
+    repository: punkdiogen/api-gateway
+    tag: v1.4
+  port: 5000
+
+frontend:
+  image:
+    repository: punkdiogen/frontend
+    tag: v1.2
+  port: 3000

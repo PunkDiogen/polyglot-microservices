@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+spec:
+  selector:
+    matchLabels:
+      app: kafka
+  replicas: 1
+  serviceName: "kafka-headless-svc"
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: redpanda
+          image: "{{ .Values.kafka.image.repository }}:{{ .Values.kafka.image.tag }}"
+          args:
+            - "redpanda"
+            - "start"
+            - "--overprovisioned"
+            - "--smp=1"
+            - "--memory={{ .Values.kafka.memory }}"
+            - "--reserve-memory=0M"
+            - "--node-id={{ .Values.kafka.nodeId }}"
+            - "--check=false"
+            - "--kafka-addr=PLAINTEXT://0.0.0.0:9092"
+            - "--advertise-kafka-addr=PLAINTEXT://kafka-svc:9092"
+            - "--set"
+            - "redpanda.auto_create_topics_enabled={{ .Values.kafka.autoCreateTopics }}"
+          ports:
+            - containerPort: 9092
+              name: kafka
+          volumeMounts:
+            - name: kafka-pvc
+              mountPath: /var/lib/redpanda/data
+          securityContext:
+            runAsUser: 0
+  volumeClaimTemplates:
+    - metadata:
+        name: kafka-pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: longhorn
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-headless-svc
+
+spec:
+  clusterIP: "None"
+  selector:
+    app: kafka
+  ports:
+    - port: 9092
+      targetPort: 9092
+      name: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-svc
+spec:
+  selector:
+    app: kafka
+  ports:
+    - port: 9092
+      targetPort: 9092
+      name: kafka

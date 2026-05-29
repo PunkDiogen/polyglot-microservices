@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "task-service-deployment"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "task-service"
+
+  template:
+    metadata:
+      labels:
+        app: "task-service"
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "task-service"
+        vault.hashicorp.com/agent-inject-secret-task: "polyglot-platform/data/app-secrets"
+        vault.hashicorp.com/agent-inject-template-task: |
+          {{`{{- with secret "polyglot-platform/data/app-secrets" -}}
+          export DB_DSN="{{ .Data.data.DB_DSN }}"
+          {{- end }}`}}
+
+    spec:
+      serviceAccountName: task-service
+      containers:
+        - name: "task-service"
+          image: "{{ .Values.taskService.image.repository }}:{{ .Values.taskService.image.tag }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              . /vault/secrets/task
+              exec /app/task-service
+          ports:
+            - containerPort: {{ .Values.taskService.port }}
+          env:
+            - name: "KAFKA_BROKER"
+              value: "kafka-svc:9092"
+            - name: "KAFKA_TOPIC"
+              value: "task-events"
+            - name: "PORT"
+              value: "{{ .Values.taskService.port }}"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: task-service-svc
+spec:
+  selector:
+    app: task-service
+  ports:
+    - port: {{ .Values.taskService.port }}
+      targetPort: {{ .Values.taskService.port }}

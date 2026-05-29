@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "api-gateway-deployment"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "api-gateway"
+
+  template:
+    metadata:
+      labels:
+        app: "api-gateway"
+
+    spec:
+      containers:
+        - name: "api-gateway"
+          image: "{{ .Values.apiGateway.image.repository }}:{{ .Values.apiGateway.image.tag }}"
+          securityContext:
+            seccompProfile:
+              type: Unconfined
+          ports:
+            - containerPort: {{ .Values.apiGateway.port }}
+          env:
+            - name: "ASPNETCORE_ENVIRONMENT"
+              value: "Development"
+            - name: "ASPNETCORE_URLS"
+              value: "http://+:{{ .Values.apiGateway.port }}"
+            - name: "Jwt__Key"
+              value: "{{ .Values.jwt.key }}"
+            - name: "Jwt__Issuer"
+              value: "{{ .Values.jwt.issuer }}"
+            - name: "Jwt__Audience"
+              value: "{{ .Values.jwt.audience }}"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-svc
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: {{ .Values.apiGateway.port }}
+      targetPort: {{ .Values.apiGateway.port }}

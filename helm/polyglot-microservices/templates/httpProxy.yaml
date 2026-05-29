@@ -1,0 +1,35 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: main-site-proxy
+spec:
+  virtualhost:
+    fqdn: "{{ .Values.domain }}"
+    tls:
+      secretName: "{{ .Values.tlsSecret }}"
+  routes:
+    - conditions:
+        - prefix: /
+      services:
+        - name: frontend-svc
+          port: {{ .Values.frontend.port }}
+    - conditions:
+        - prefix: /auth
+      services:
+        - name: api-gateway-svc
+          port: {{ .Values.apiGateway.port }}
+    - conditions:
+        - prefix: /tasks
+      services:
+        - name: api-gateway-svc
+          port: {{ .Values.apiGateway.port }}
+    - conditions:
+        - prefix: /projects
+      services:
+        - name: api-gateway-svc
+          port: {{ .Values.apiGateway.port }}
+    - conditions:
+        - prefix: /analytics
+      services:
+        - name: api-gateway-svc
+          port: {{ .Values.apiGateway.port  }}
