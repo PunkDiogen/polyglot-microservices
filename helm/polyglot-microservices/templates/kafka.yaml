@@ -74,3 +74,4 @@ spec:
     - port: 9092
       targetPort: 9092
       name: kafka
+      name: http

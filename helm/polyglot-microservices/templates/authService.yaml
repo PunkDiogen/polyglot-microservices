@@ -60,3 +60,4 @@ spec:
   ports:
     - port: {{ .Values.authService.port }}
       targetPort: {{ .Values.authService.port }}
+      name: http

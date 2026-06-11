@@ -17,6 +17,9 @@ jwt:
   issuer: "REPLACE_ME"
   audience: "REPLACE_ME"
 
+monitoring:
+  enabled: true
+
 kafka:
   image:
     repository: redpandadata/redpanda

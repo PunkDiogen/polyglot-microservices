@@ -53,3 +53,4 @@ spec:
   ports:
     - port: {{ .Values.taskService.port }}
       targetPort: {{ .Values.taskService.port }}
+      name: http

@@ -34,3 +34,4 @@ spec:
   ports:
     - port: {{ .Values.frontend.port }}
       targetPort: {{ .Values.frontend.port }}
+      name: http

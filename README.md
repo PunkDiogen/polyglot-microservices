@@ -201,7 +201,20 @@ Vault Agent Injector добавляет в под:
 3. Основной контейнер читает секреты из файла при старте
 
 ---
+## 🔹 Мониторинг
 
+Развернут стек **kube-prometheus-stack** (Prometheus + Grafana + Alertmanager) для сбора метрик со всех сервисов и инфраструктуры.
+
+### Компоненты:
+- **kube-prometheus-stack** — установлен через Helm из OCI-репозитория `ghcr.io/prometheus-community/charts/kube-prometheus-stack`
+- **Prometheus** — сбор метрик
+- **Grafana** — дашборды и визуализация
+- **ServiceMonitor'ы** — автоматический сбор метрик с auth, task, analytics, api-gateway
+
+### Дашборды:
+![Grafana Dashboard](/assets/grafana.png)
+
+---
 ## Структура репозитория
 
 ```

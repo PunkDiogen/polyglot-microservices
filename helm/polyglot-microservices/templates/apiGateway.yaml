@@ -45,3 +45,4 @@ spec:
   ports:
     - port: {{ .Values.apiGateway.port }}
       targetPort: {{ .Values.apiGateway.port }}
+      name: http
