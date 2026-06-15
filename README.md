@@ -230,7 +230,7 @@ spec:
         domain: your-domain.com        # ← замените на свой домен
         tlsSecret: your-tls-secret     # ← замените на свой секрет с TLS-сертификатом
         # ... остальные значения в values.local.yaml
-  project: default
+  project: services
   syncPolicy:
     automated:
       prune: false
