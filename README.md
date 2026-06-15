@@ -201,6 +201,43 @@ Vault Agent Injector добавляет в под:
 3. Основной контейнер читает секреты из файла при старте
 
 ---
+
+## 🔹 GitOps с ArgoCD
+
+Для непрерывного деплоя используется ArgoCD. Все изменения в инфраструктуре и сервисах отслеживаются из Git-репозитория.
+### Установка ArgoCD:
+```bash
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.12.0/manifests/install.yaml
+```
+### Application манифест для ArgoCD:
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: polyglot-services
+  namespace: argocd
+spec:
+  destination:
+    namespace: default
+    server: https://kubernetes.default.svc
+  source:
+    path: helm/polyglot-microservices
+    repoURL: https://github.com/PunkDiogen/polyglot-microservices
+    targetRevision: main
+    helm:
+      values: |-
+        domain: your-domain.com        # ← замените на свой домен
+        tlsSecret: your-tls-secret     # ← замените на свой секрет с TLS-сертификатом
+        # ... остальные значения в values.local.yaml
+  project: default
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+  ```    
+---
+
 ## 🔹 Мониторинг
 
 Развернут стек **kube-prometheus-stack** (Prometheus + Grafana + Alertmanager) для сбора метрик со всех сервисов и инфраструктуры.
